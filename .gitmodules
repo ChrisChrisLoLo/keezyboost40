@@ -1,0 +1,6 @@
+[submodule "pcb/keyswitches.pretty"]
+	path = pcb/keyswitches.pretty
+	url = https://github.com/daprice/keyswitches.pretty
+[submodule "pcb/KiCad-RP-Pico"]
+	path = pcb/KiCad-RP-Pico
+	url = https://github.com/ncarandini/KiCad-RP-Pico
