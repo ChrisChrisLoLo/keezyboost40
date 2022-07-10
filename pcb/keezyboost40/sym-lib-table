@@ -1,0 +1,6 @@
+(sym_lib_table
+  (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/../KiCad-RP-Pico/RP-Pico Libraries/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+  (lib (name "keyboard-extras")(type "KiCad")(uri "/Users/chriz/Documents/CAD/keezyboost40/pcb/sporewoh-keyboard-extras/keyboard-extras.kicad_sym")(options "")(descr ""))
+  (lib (name "sporewoh_keyboard_extras")(type "KiCad")(uri "/Users/chriz/Documents/CAD/keezyboost40/pcb/sporewoh-keyboard-extras/sporewoh_keyboard_extras.kicad_sym")(options "")(descr ""))
+  (lib (name "kicub_keyboard_extras")(type "KiCad")(uri "/Users/chriz/Documents/CAD/keezyboost40/pcb/sporewoh-keyboard-extras/kicub_keyboard_extras.kicad_sym")(options "")(descr ""))
+)
