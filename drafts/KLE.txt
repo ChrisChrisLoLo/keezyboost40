@@ -1,4 +1,4 @@
-[{a:7},"Tab","Q","W","E","R","T","Y","U","I","O","P","Back Space"],
-["Esc","A","S","D","F","G","H","J","K","L",";","'"],
-["Shift","Z","X","C","V","B","N","M",",",".","/","Return"],
-["","Ctrl","Alt","Super","&dArr;","","","&uArr;","&larr;","&darr;","&uarr;","&rarr;"]
+[{a:7},"Tab","Q","W","E","R",{x:2},"U","I","O","P","Back Space"],
+["Esc","A","S","D","F",{x:2},"J","K","L",";","'"],
+["Shift","Z","X","C","V",{x:2},"M",",",".","/","Return"],
+["","Ctrl","Alt","Super","&dArr;",{x:2},"&uArr;","&larr;","&darr;","&uarr;","&rarr;"]

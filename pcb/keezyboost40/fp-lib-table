@@ -1,4 +1,3 @@
 (fp_lib_table
-  (lib (name "Library")(type "KiCad")(uri "/Users/chriz/Documents/CAD/keezyboost40/pcb/sporewoh-keyboard-extras/Library.pretty")(options "")(descr ""))
   (lib (name "kicub_keyboard_extras")(type "KiCad")(uri "/Users/chriz/Documents/CAD/keezyboost40/pcb/sporewoh-keyboard-extras/Library.pretty/kicub_keyboard_extras.pretty")(options "")(descr ""))
 )
