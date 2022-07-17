@@ -15,6 +15,8 @@ rp2040-boot2 = "0.2"
 rp2040-hal = "0.5"
 usb-device = "0.2"
 usbd-hid = "0.6"
+st7735-lcd = "0.8"
+embedded-graphics = "0.7.1"
 
 # Dependencies for debug probe
 defmt = "0.3" # Macros and support for deferred formatting logging

@@ -3,6 +3,8 @@
 #![no_main]
 #![no_std]
 
+
+
 use core::convert::Infallible;
 use cortex_m::delay::Delay;
 use defmt::{error, info};
@@ -22,6 +24,14 @@ use usbd_hid::{
         HIDClass, HidClassSettings, HidCountryCode, HidProtocol, HidSubClass, ProtocolModeConfig,
     },
 };
+
+// lcd traits
+use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
+use embedded_graphics::prelude::*;
+use embedded_graphics::pixelcolor::Rgb565;
+use st7735_lcd;
+use st7735_lcd::Orientation;
+use embedded_time::rate::Hertz;
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -106,29 +116,23 @@ fn main() -> ! {
 
     // Set up keyboard matrix pins.
     let rows: &[&dyn InputPin<Error = Infallible>] = &[
-        &pins.gpio26.into_pull_down_input(),
-        &pins.gpio25.into_pull_down_input(),
-        &pins.gpio27.into_pull_down_input(),
-        &pins.gpio28.into_pull_down_input(),
-        &pins.gpio15.into_pull_down_input(),
-        &pins.gpio24.into_pull_down_input(),
+        &pins.gpio5.into_pull_down_input(),
+        &pins.gpio6.into_pull_down_input(),
+        &pins.gpio7.into_pull_down_input(),
+        &pins.gpio8.into_pull_down_input(),
     ];
 
     let cols: &mut [&mut dyn OutputPin<Error = Infallible>] = &mut [
-        &mut pins.gpio29.into_push_pull_output(),
-        &mut pins.gpio16.into_push_pull_output(),
-        &mut pins.gpio17.into_push_pull_output(),
-        &mut pins.gpio18.into_push_pull_output(),
-        &mut pins.gpio9.into_push_pull_output(),
-        &mut pins.gpio10.into_push_pull_output(),
-        &mut pins.gpio19.into_push_pull_output(),
-        &mut pins.gpio11.into_push_pull_output(),
-        &mut pins.gpio12.into_push_pull_output(),
-        &mut pins.gpio13.into_push_pull_output(),
-        &mut pins.gpio14.into_push_pull_output(),
-        &mut pins.gpio20.into_push_pull_output(),
+        &mut pins.gpio27.into_push_pull_output(),
+        &mut pins.gpio26.into_push_pull_output(),
         &mut pins.gpio22.into_push_pull_output(),
-        &mut pins.gpio23.into_push_pull_output(),
+        &mut pins.gpio21.into_push_pull_output(),
+        &mut pins.gpio20.into_push_pull_output(),
+        &mut pins.gpio4.into_push_pull_output(),
+        &mut pins.gpio3.into_push_pull_output(),
+        &mut pins.gpio2.into_push_pull_output(),
+        &mut pins.gpio1.into_push_pull_output(),
+        &mut pins.gpio0.into_push_pull_output(),
     ];
 
     // Timer-based resources.
@@ -139,6 +143,45 @@ fn main() -> ! {
 
     // Start on a 500ms countdown so the USB endpoint writes don't block.
     scan_countdown.start(500.milliseconds());
+
+    //// Start the TFT screen
+
+    // These are implicitly used by the spi driver if they are in the correct mode
+    let _spi_sclk = pins.gpio18.into_mode::<rp2040_hal::gpio::FunctionSpi>();
+    let _spi_mosi = pins.gpio19.into_mode::<rp2040_hal::gpio::FunctionSpi>();
+    //let _spi_miso = pins.gpio4.into_mode::<rp2040_hal::gpio::FunctionSpi>();
+    let spi = rp2040_hal::Spi::<_, _, 8>::new(pac.SPI0);
+
+    let mut lcd_led = pins.gpio15.into_push_pull_output();
+    let dc = pins.gpio16.into_push_pull_output();
+    let rst = pins.gpio14.into_push_pull_output();
+
+    // Exchange the uninitialised SPI driver for an initialised one
+    let spi = spi.init(
+        &mut pac.RESETS,
+        clocks.peripheral_clock.freq(),
+        Hertz::new(16_000_000u32),
+        &embedded_hal::spi::MODE_0,
+    );
+
+
+    let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 160, 128);
+
+    disp.init(&mut delay).unwrap();
+    disp.set_orientation(&Orientation::Landscape).unwrap();
+    disp.clear(Rgb565::BLACK).unwrap();
+    disp.set_offset(0, 25);
+
+    let image_raw: ImageRawLE<Rgb565> =
+        ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
+
+    let image: Image<_> = Image::new(&image_raw, Point::new(34, 8));
+
+    image.draw(&mut disp).unwrap();
+    
+    // Wait until the background and image have been rendered otherwise
+    // the screen will show random pixels for a brief moment
+    lcd_led.set_high().unwrap();
 
     info!("Start main loop");
 
