@@ -165,17 +165,17 @@ fn main() -> ! {
     );
 
 
-    let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 160, 128);
+    let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 128, 160);
 
     disp.init(&mut delay).unwrap();
-    disp.set_orientation(&Orientation::Landscape).unwrap();
+    disp.set_orientation(&Orientation::PortraitSwapped).unwrap();
     disp.clear(Rgb565::BLACK).unwrap();
     disp.set_offset(0, 25);
 
     let image_raw: ImageRawLE<Rgb565> =
         ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
 
-    let image: Image<_> = Image::new(&image_raw, Point::new(34, 8));
+    let image: Image<_> = Image::new(&image_raw, Point::new(24, 28));
 
     image.draw(&mut disp).unwrap();
     
