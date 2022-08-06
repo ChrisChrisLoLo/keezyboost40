@@ -7,42 +7,11 @@ const NUM_LAYERS: usize = 1;
 
 mod layout;
 
-use core::convert::Infallible;
-use cortex_m::delay::Delay;
-use defmt::{error, info};
-use defmt_rtt as _;
-use embedded_hal::{
-    digital::v2::{InputPin, OutputPin},
-    timer::CountDown,
-};
-use embedded_time::duration::Extensions;
-// use panic_reset as _;
-use panic_probe as _;
-use rp2040_hal::{pac, usb::UsbBus, Clock, Watchdog};
-use usb_device::{bus::UsbBusAllocator, device::UsbDeviceBuilder, prelude::UsbVidPid, UsbError};
-use usbd_hid::{
-    descriptor::KeyboardReport,
-    hid_class::{
-        HIDClass, HidClassSettings, HidCountryCode, HidProtocol, HidSubClass, ProtocolModeConfig,
-    },
-};
-
-// lcd traits
-use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
-use embedded_graphics::prelude::*;
-use embedded_graphics::pixelcolor::Rgb565;
-use st7735_lcd;
-use st7735_lcd::Orientation;
-use embedded_time::rate::Hertz;
-
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
 #[link_section = ".boot2"]
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
-
-mod hid_descriptor;
-mod key_codes;
 
 const EXTERNAL_CRYSTAL_FREQUENCY_HZ: u32 = 12_000_000;
 
@@ -64,13 +33,25 @@ mod app {
     use rp2040_hal::{
         clocks::{init_clocks_and_plls, Clock},
         gpio::{bank0::*, dynpin::DynPin},
-        pac::{I2C0, PIO0},
+        pac::{I2C0, PIO0, RESETS, SPI0, CorePeripherals},
         pio::{PIOExt, SM0, SM1},
         sio::Sio,
         timer::{Alarm0, Timer, Alarm},
         usb::UsbBus,
         watchdog::Watchdog,
     };
+    use embedded_hal::{
+        digital::v2::{InputPin, OutputPin},
+        timer::CountDown,
+    };
+
+    // lcd traits
+    use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
+    use embedded_graphics::prelude::*;
+    use embedded_graphics::pixelcolor::Rgb565;
+    use st7735_lcd;
+    use st7735_lcd::Orientation;
+    use embedded_time::rate::Hertz;
 
     use core::iter::once;
 
@@ -78,13 +59,6 @@ mod app {
 
 
     use crate::layout as kb_layout;
-    use embedded_graphics::{
-        image::{Image, ImageRaw},
-        mono_font::{ascii::FONT_7X14_BOLD, MonoTextStyleBuilder},
-        pixelcolor::BinaryColor,
-        prelude::*,
-        text::{Baseline, Text},
-    };
     use keyberon::debounce::Debouncer;
     use keyberon::key_code;
     use keyberon::layout::{ Event, Layout};
@@ -186,6 +160,47 @@ mod app {
                 pins.gpio8.into_push_pull_output().into(),
             ],
         );
+
+        //// Start the TFT screen
+        //let core = CorePeripherals::take().unwrap();
+        //let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().0);
+
+        // These are implicitly used by the spi driver if they are in the correct mode
+        let _spi_sclk = pins.gpio18.into_mode::<rp2040_hal::gpio::FunctionSpi>();
+        let _spi_mosi = pins.gpio19.into_mode::<rp2040_hal::gpio::FunctionSpi>();
+        //let _spi_miso = pins.gpio4.into_mode::<rp2040_hal::gpio::FunctionSpi>();
+        let spi = rp2040_hal::Spi::<_, _, 8>::new(c.device.SPI0);
+
+        let mut lcd_led = pins.gpio15.into_push_pull_output();
+        let dc = pins.gpio16.into_push_pull_output();
+        let rst = pins.gpio14.into_push_pull_output();
+
+        // Exchange the uninitialised SPI driver for an initialised one
+        let spi = spi.init(
+            &mut resets,
+            clocks.peripheral_clock.freq(),
+            Hertz::new(16_000_000u32),
+            &embedded_hal::spi::MODE_0,
+        );
+
+        let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 128, 160);
+
+        // disp.init(&mut delay).unwrap();
+        // disp.set_orientation(&Orientation::PortraitSwapped).unwrap();
+        // disp.clear(Rgb565::BLACK).unwrap();
+        // disp.set_offset(0, 25);
+
+        // let image_raw: ImageRawLE<Rgb565> =
+        //     ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
+
+        // let image: Image<_> = Image::new(&image_raw, Point::new(24, 28));
+
+        // image.draw(&mut disp).unwrap();
+        
+        // // Wait until the background and image have been rendered otherwise
+        // // the screen will show random pixels for a brief moment
+        // lcd_led.set_high().unwrap();
+
 
         (
             Shared {
