@@ -6,6 +6,7 @@ const NUM_ROWS: usize = 4;
 const NUM_LAYERS: usize = 1;
 
 mod layout;
+mod delay;
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -36,7 +37,7 @@ mod app {
         pac::{I2C0, PIO0, RESETS, SPI0, CorePeripherals},
         pio::{PIOExt, SM0, SM1},
         sio::Sio,
-        timer::{Alarm0, Timer, Alarm},
+        timer::{Alarm3, Timer, Alarm},
         usb::UsbBus,
         watchdog::Watchdog,
     };
@@ -55,6 +56,7 @@ mod app {
 
     use core::iter::once;
 
+    use crate::delay::RP2040TimerDelay;
     use crate::{NUM_COLS, NUM_ROWS, NUM_LAYERS};
 
 
@@ -67,6 +69,13 @@ mod app {
     use usb_device::class_prelude::UsbBusAllocator;
     use usb_device::device::UsbDeviceState;
 
+    // hardware delay
+    // we explicitly do NOT use any delays using SYST as
+    // RTIC has already taken it
+    use embedded_hal::prelude::*;
+    use asm_delay::AsmDelay;
+    use asm_delay::bitrate::U32BitrateExt;
+
     const SCAN_TIME_US: u32 = 1000;
     const EXTERNAL_XTAL_FREQ_HZ: u32 = 12_000_000u32;
     static mut USB_BUS: Option<UsbBusAllocator<UsbBus>> = None;
@@ -76,7 +85,7 @@ mod app {
         usb_dev: usb_device::device::UsbDevice<'static, UsbBus>,
         usb_class: keyberon::Class<'static, UsbBus, ()>,
         timer: Timer,
-        alarm: Alarm0,
+        alarm: Alarm3,
         #[lock_free]
         matrix: keyberon::matrix::Matrix<DynPin,DynPin,NUM_COLS,NUM_ROWS> ,
         layout: Layout<NUM_COLS, NUM_ROWS, NUM_LAYERS, kb_layout::CustomActions>,
@@ -117,7 +126,7 @@ mod app {
         );
 
         let mut timer = Timer::new(c.device.TIMER, &mut resets);
-        let mut alarm = timer.alarm_0().unwrap();
+        let mut alarm = timer.alarm_3().unwrap();
         let _ = alarm.schedule(SCAN_TIME_US.microseconds());
         alarm.enable_interrupt();
 
@@ -161,9 +170,6 @@ mod app {
             ],
         );
 
-        //// Start the TFT screen
-        //let core = CorePeripherals::take().unwrap();
-        //let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().0);
 
         // These are implicitly used by the spi driver if they are in the correct mode
         let _spi_sclk = pins.gpio18.into_mode::<rp2040_hal::gpio::FunctionSpi>();
@@ -184,10 +190,22 @@ mod app {
         );
 
         let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 128, 160);
+        
 
+        // Cannot use SYST as RTIC has already taken this
+        // https://github.com/rtic-rs/cortex-m-rtic/issues/523
+        // let mut delay = RP2040TimerDelay::new(&timer);
+        // let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().0);
+        use cortex_m::asm::delay;
+        //_delay(2000000_u32);
+        lcd_led.set_high().unwrap();
+
+
+
+        // delay.delay_ms(2000000_u32);
         // disp.init(&mut delay).unwrap();
         // disp.set_orientation(&Orientation::PortraitSwapped).unwrap();
-        // disp.clear(Rgb565::BLACK).unwrap();
+        // disp.clear(Rgb565::GREEN).unwrap();
         // disp.set_offset(0, 25);
 
         // let image_raw: ImageRawLE<Rgb565> =
@@ -199,8 +217,8 @@ mod app {
         
         // // Wait until the background and image have been rendered otherwise
         // // the screen will show random pixels for a brief moment
-        // lcd_led.set_high().unwrap();
 
+        // lcd_led.set_high().unwrap();
 
         (
             Shared {
@@ -246,7 +264,7 @@ mod app {
                 layout.lock(|l| l.event(e));
                 return;
             }
-        }
+        }       
 
         let report: key_code::KbHidReport = layout.lock(|l| l.keycodes().collect());
         if !c
@@ -262,7 +280,7 @@ mod app {
         while let Ok(0) = c.shared.usb_class.lock(|k| k.write(report.as_bytes())) {}
     }
 
-    #[task(binds = TIMER_IRQ_0, priority = 1, shared = [ matrix, debouncer, timer, alarm, watchdog, usb_dev, usb_class])]
+    #[task(binds = TIMER_IRQ_3, priority = 1, shared = [ matrix, debouncer, timer, alarm, watchdog, usb_dev, usb_class])]
     fn scan_timer_irq(mut c: scan_timer_irq::Context) {
         let mut alarm = c.shared.alarm;
 
