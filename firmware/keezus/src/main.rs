@@ -14,8 +14,6 @@ mod delay;
 #[used]
 pub static BOOT2: [u8; 256] = rp2040_boot2::BOOT_LOADER_W25Q080;
 
-const EXTERNAL_CRYSTAL_FREQUENCY_HZ: u32 = 12_000_000;
-
 #[defmt::panic_handler]
 fn panic() -> ! {
     cortex_m::asm::udf()
@@ -147,8 +145,6 @@ mod app {
         let usb_class = keyberon::new_class(unsafe { USB_BUS.as_ref().unwrap() }, ());
         let usb_dev = keyberon::new_device(unsafe { USB_BUS.as_ref().unwrap() });
 
-        watchdog.start(10_000.microseconds());
-
         let matrix = keyberon::matrix::Matrix::new(
             [
                 pins.gpio27.into_pull_up_input().into(),
@@ -194,31 +190,38 @@ mod app {
 
         // Cannot use SYST as RTIC has already taken this
         // https://github.com/rtic-rs/cortex-m-rtic/issues/523
-        // let mut delay = RP2040TimerDelay::new(&timer);
+
+        let mut delay = RP2040TimerDelay::new(&timer);
         // let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().0);
-        use cortex_m::asm::delay;
-        //_delay(2000000_u32);
+        
+
+        // This WORKS
+        // use cortex_m::asm::delay;
+        // cortex_m::asm::delay(10000000_u32);
+        // lcd_led.set_high().unwrap();
+
+
+        // delay.delay_ms(1000_u32);
+        // lcd_led.set_high().unwrap();
+
+        disp.init(&mut delay).unwrap();
+        disp.set_orientation(&Orientation::PortraitSwapped).unwrap();
+        disp.clear(Rgb565::GREEN).unwrap();
+        disp.set_offset(0, 25);
+
+        let image_raw: ImageRawLE<Rgb565> =
+            ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
+
+        let image: Image<_> = Image::new(&image_raw, Point::new(24, 28));
+
+        image.draw(&mut disp).unwrap();
+        
+        // Wait until the background and image have been rendered otherwise
+        // the screen will show random pixels for a brief moment
+
         lcd_led.set_high().unwrap();
 
-
-
-        // delay.delay_ms(2000000_u32);
-        // disp.init(&mut delay).unwrap();
-        // disp.set_orientation(&Orientation::PortraitSwapped).unwrap();
-        // disp.clear(Rgb565::GREEN).unwrap();
-        // disp.set_offset(0, 25);
-
-        // let image_raw: ImageRawLE<Rgb565> =
-        //     ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
-
-        // let image: Image<_> = Image::new(&image_raw, Point::new(24, 28));
-
-        // image.draw(&mut disp).unwrap();
-        
-        // // Wait until the background and image have been rendered otherwise
-        // // the screen will show random pixels for a brief moment
-
-        // lcd_led.set_high().unwrap();
+        watchdog.start(10_000.microseconds());
 
         (
             Shared {
