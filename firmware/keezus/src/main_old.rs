@@ -249,11 +249,12 @@ fn report_from_matrix(matrix: &[[bool; NUM_ROWS]; NUM_COLS]) -> KeyboardReport {
         }
     };
 
-    let layer_mapping = if matrix[0][5] {
-        key_mapping::FN_LAYER_MAPPING
-    } else {
-        key_mapping::NORMAL_LAYER_MAPPING
-    };
+    // let layer_mapping = if matrix[0][5] {
+    //     key_mapping::FN_LAYER_MAPPING
+    // } else {
+    //     key_mapping::NORMAL_LAYER_MAPPING
+    // };
+    layer_mapping = key_mapping::NORMAL_LAYER_MAPPING;
 
     for (matrix_column, mapping_column) in matrix.iter().zip(layer_mapping) {
         for (key_pressed, mapping_row) in matrix_column.iter().zip(mapping_column) {

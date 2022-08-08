@@ -369,9 +369,9 @@ dependencies = [
 [[package]]
 name = "keyberon"
 version = "0.2.0"
-source = "git+https://github.com/TeXitoi/keyberon#29e960e7ca0a1f79196e441a4abd65a7d9f79ea5"
 dependencies = [
  "arraydeque",
+ "cortex-m",
  "either",
  "embedded-hal",
  "heapless",
@@ -382,7 +382,6 @@ dependencies = [
 [[package]]
 name = "keyberon-macros"
 version = "0.1.0"
-source = "git+https://github.com/TeXitoi/keyberon#29e960e7ca0a1f79196e441a4abd65a7d9f79ea5"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",

@@ -5,6 +5,7 @@ const NUM_COLS: usize = 10;
 const NUM_ROWS: usize = 4;
 const NUM_LAYERS: usize = 1;
 
+
 mod layout;
 mod delay;
 
@@ -35,7 +36,7 @@ mod app {
         pac::{I2C0, PIO0, RESETS, SPI0, CorePeripherals},
         pio::{PIOExt, SM0, SM1},
         sio::Sio,
-        timer::{Alarm3, Timer, Alarm},
+        timer::{Alarm3, Timer, Alarm, Alarm2},
         usb::UsbBus,
         watchdog::Watchdog,
     };
@@ -74,9 +75,14 @@ mod app {
     use asm_delay::AsmDelay;
     use asm_delay::bitrate::U32BitrateExt;
 
-    const SCAN_TIME_US: u32 = 1000;
+    // const SCAN_TIME_US: u32 = 1000;
+    const SCAN_TIME_US: u32 = 2000;
+    const DISPLAY_UPDATE_TIME_US: u32 = 1700;
     const EXTERNAL_XTAL_FREQ_HZ: u32 = 12_000_000u32;
     static mut USB_BUS: Option<UsbBusAllocator<UsbBus>> = None;
+
+    const SCREEN_WIDTH: u32 = 128;
+    const SCREEN_HEIGHT: u32 = 160;
 
     #[shared]
     struct Shared {
@@ -91,6 +97,11 @@ mod app {
         debouncer: Debouncer<[[bool; NUM_COLS]; NUM_ROWS]>,
         #[lock_free]
         watchdog: Watchdog,
+        #[lock_free]
+        display: st7735_lcd::ST7735<rp2040_hal::Spi<rp2040_hal::spi::Enabled,SPI0,8> , rp2040_hal::gpio::Pin<Gpio16,rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>> , rp2040_hal::gpio::Pin<Gpio14,rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>>>,
+        displayAlarm: Alarm2,
+        #[lock_free]
+        x: i32
     }
 
     #[local]
@@ -127,6 +138,10 @@ mod app {
         let mut alarm = timer.alarm_3().unwrap();
         let _ = alarm.schedule(SCAN_TIME_US.microseconds());
         alarm.enable_interrupt();
+        let mut displayAlarm = timer.alarm_2().unwrap();
+        let _ = displayAlarm.schedule(DISPLAY_UPDATE_TIME_US.microseconds());
+        displayAlarm.enable_interrupt();
+
 
         let (mut pio, sm0, sm1, _, _) = c.device.PIO0.split(&mut resets);
 
@@ -145,24 +160,44 @@ mod app {
         let usb_class = keyberon::new_class(unsafe { USB_BUS.as_ref().unwrap() }, ());
         let usb_dev = keyberon::new_device(unsafe { USB_BUS.as_ref().unwrap() });
 
+        // let matrix = keyberon::matrix::Matrix::new(
+        //     [
+        //         pins.gpio27.into_pull_up_input().into(),
+        //         pins.gpio26.into_pull_up_input().into(),
+        //         pins.gpio22.into_pull_up_input().into(),
+        //         pins.gpio21.into_pull_up_input().into(),
+        //         pins.gpio20.into_pull_up_input().into(),
+        //         pins.gpio4.into_pull_up_input().into(),
+        //         pins.gpio3.into_pull_up_input().into(),
+        //         pins.gpio2.into_pull_up_input().into(),
+        //         pins.gpio1.into_pull_up_input().into(),
+        //         pins.gpio0.into_pull_up_input().into(),
+        //     ],
+        //     [
+        //         pins.gpio5.into_push_pull_output().into(),
+        //         pins.gpio6.into_push_pull_output().into(),
+        //         pins.gpio7.into_push_pull_output().into(),
+        //         pins.gpio8.into_push_pull_output().into(),
+        //     ],
+        // );
         let matrix = keyberon::matrix::Matrix::new(
             [
-                pins.gpio27.into_pull_up_input().into(),
-                pins.gpio26.into_pull_up_input().into(),
-                pins.gpio22.into_pull_up_input().into(),
-                pins.gpio21.into_pull_up_input().into(),
-                pins.gpio20.into_pull_up_input().into(),
-                pins.gpio4.into_pull_up_input().into(),
-                pins.gpio3.into_pull_up_input().into(),
-                pins.gpio2.into_pull_up_input().into(),
-                pins.gpio1.into_pull_up_input().into(),
-                pins.gpio0.into_pull_up_input().into(),
+                pins.gpio27.into_push_pull_output().into(),
+                pins.gpio26.into_push_pull_output().into(),
+                pins.gpio22.into_push_pull_output().into(),
+                pins.gpio21.into_push_pull_output().into(),
+                pins.gpio20.into_push_pull_output().into(),
+                pins.gpio4.into_push_pull_output().into(),
+                pins.gpio3.into_push_pull_output().into(),
+                pins.gpio2.into_push_pull_output().into(),
+                pins.gpio1.into_push_pull_output().into(),
+                pins.gpio0.into_push_pull_output().into(),
             ],
             [
-                pins.gpio5.into_push_pull_output().into(),
-                pins.gpio6.into_push_pull_output().into(),
-                pins.gpio7.into_push_pull_output().into(),
-                pins.gpio8.into_push_pull_output().into(),
+                pins.gpio5.into_pull_down_input().into(),
+                pins.gpio6.into_pull_down_input().into(),
+                pins.gpio7.into_pull_down_input().into(),
+                pins.gpio8.into_pull_down_input().into(),
             ],
         );
 
@@ -185,7 +220,7 @@ mod app {
             &embedded_hal::spi::MODE_0,
         );
 
-        let mut disp = st7735_lcd::ST7735::new(spi, dc, rst, true, false, 128, 160);
+        let mut display = st7735_lcd::ST7735::new(spi, dc, rst, true, false, SCREEN_WIDTH, SCREEN_HEIGHT);
         
 
         // Cannot use SYST as RTIC has already taken this
@@ -204,24 +239,28 @@ mod app {
         // delay.delay_ms(1000_u32);
         // lcd_led.set_high().unwrap();
 
-        disp.init(&mut delay).unwrap();
-        disp.set_orientation(&Orientation::PortraitSwapped).unwrap();
-        disp.clear(Rgb565::GREEN).unwrap();
-        disp.set_offset(0, 25);
+        display.init(&mut delay).unwrap();
+        display.set_orientation(&Orientation::PortraitSwapped).unwrap();
+        display.clear(Rgb565::GREEN).unwrap();
+        display.set_offset(0, 0);
 
         let image_raw: ImageRawLE<Rgb565> =
             ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
 
         let image: Image<_> = Image::new(&image_raw, Point::new(24, 28));
 
-        image.draw(&mut disp).unwrap();
+        image.draw(&mut display).unwrap();
         
         // Wait until the background and image have been rendered otherwise
         // the screen will show random pixels for a brief moment
 
         lcd_led.set_high().unwrap();
 
-        watchdog.start(10_000.microseconds());
+        // start watchdog after initialization
+        // It needs to be fairly high though to account for screen drawing etc
+        // watchdog.start(10_000.microseconds());
+        watchdog.start(1_000_000.microseconds());
+
 
         (
             Shared {
@@ -233,6 +272,9 @@ mod app {
                 debouncer: Debouncer::new([[false; NUM_COLS]; NUM_ROWS], [[false; NUM_COLS]; NUM_ROWS], 10),
                 layout: Layout::new(&kb_layout::LAYERS),
                 watchdog,
+                display,
+                displayAlarm,
+                x: 0
             },
             Local {},
             init::Monotonics(),
@@ -271,7 +313,7 @@ mod app {
 
         let report: key_code::KbHidReport = layout.lock(|l| l.keycodes().collect());
         if !c
-            .shared
+            .shared  
             .usb_class
             .lock(|k| k.device_mut().set_keyboard_report(report.clone()))
         {
@@ -283,14 +325,30 @@ mod app {
         while let Ok(0) = c.shared.usb_class.lock(|k| k.write(report.as_bytes())) {}
     }
 
-    #[task(binds = TIMER_IRQ_3, priority = 1, shared = [ matrix, debouncer, timer, alarm, watchdog, usb_dev, usb_class])]
-    fn scan_timer_irq(mut c: scan_timer_irq::Context) {
-        let mut alarm = c.shared.alarm;
+    #[task(binds = TIMER_IRQ_2, priority = 1, shared = [ display, displayAlarm, x ])]
+    fn screen_update_irq(c: screen_update_irq::Context) {
+        let mut alarm = c.shared.displayAlarm;
+
+        let image_raw: ImageRawLE<Rgb565> =
+        ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
+
+        let image: Image<_> = Image::new(&image_raw, Point::new(0, *c.shared.x));
+        
+        *c.shared.x =(*c.shared.x + 1)%160 ;
+
+        image.draw(c.shared.display).unwrap();
 
         alarm.lock(|a| {
             a.clear_interrupt();
-            let _ = a.schedule(SCAN_TIME_US.microseconds());
+            let _ = a.schedule(DISPLAY_UPDATE_TIME_US.microseconds());
         });
+
+    }
+
+
+    #[task(binds = TIMER_IRQ_3, priority = 2, shared = [ matrix, debouncer, timer, alarm, watchdog, usb_dev, usb_class])]
+    fn scan_timer_irq(mut c: scan_timer_irq::Context) {
+
 
         c.shared.watchdog.feed();
 
@@ -299,5 +357,12 @@ mod app {
         }
 
         handle_event::spawn(None).unwrap();
+
+        let mut alarm = c.shared.alarm;
+
+        alarm.lock(|a| {
+            a.clear_interrupt();
+            let _ = a.schedule(SCAN_TIME_US.microseconds());
+        });
     }
 }

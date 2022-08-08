@@ -4,3 +4,6 @@
 [submodule "pcb/KiCad-RP-Pico"]
 	path = pcb/KiCad-RP-Pico
 	url = https://github.com/ncarandini/KiCad-RP-Pico
+[submodule "firmware/keyberon"]
+	path = firmware/keyberon
+	url = https://github.com/ChrisChrisLoLo/keyberon
