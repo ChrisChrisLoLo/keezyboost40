@@ -1,13 +1,17 @@
 #![no_main]
 #![no_std]
 
+mod layout;
+mod delay;
+
 const NUM_COLS: usize = 10;
 const NUM_ROWS: usize = 4;
 const NUM_LAYERS: usize = 1;
 
-
-mod layout;
-mod delay;
+pub struct Graphics{
+    x: i32,
+    y: i32,
+}  
 
 /// The linker will place this boot block at the start of our program image. We
 /// need this to help the ROM bootloader get our code up and running.
@@ -49,6 +53,7 @@ mod app {
     use embedded_graphics::image::{Image, ImageRaw, ImageRawLE};
     use embedded_graphics::prelude::*;
     use embedded_graphics::pixelcolor::Rgb565;
+    use embedded_graphics::geometry::Point;
     use st7735_lcd;
     use st7735_lcd::Orientation;
     use embedded_time::rate::Hertz;
@@ -57,6 +62,7 @@ mod app {
 
     use crate::delay::RP2040TimerDelay;
     use crate::{NUM_COLS, NUM_ROWS, NUM_LAYERS};
+    use crate::Graphics;
 
 
     use crate::layout as kb_layout;
@@ -71,19 +77,22 @@ mod app {
     // hardware delay
     // we explicitly do NOT use any delays using SYST as
     // RTIC has already taken it
-    use embedded_hal::prelude::*;
+    use embedded_hal::{prelude::*, watchdog};
     use asm_delay::AsmDelay;
     use asm_delay::bitrate::U32BitrateExt;
 
-    // const SCAN_TIME_US: u32 = 1000;
-    const SCAN_TIME_US: u32 = 2000;
+    const SCAN_TIME_US: u32 = 1000;
+    // const SCAN_TIME_US: u32 = 2000;
+
     const DISPLAY_UPDATE_TIME_US: u32 = 1700;
+    // const DISPLAY_UPDATE_TIME_US: u32 = 3400;
+
     const EXTERNAL_XTAL_FREQ_HZ: u32 = 12_000_000u32;
     static mut USB_BUS: Option<UsbBusAllocator<UsbBus>> = None;
 
     const SCREEN_WIDTH: u32 = 128;
     const SCREEN_HEIGHT: u32 = 160;
-
+  
     #[shared]
     struct Shared {
         usb_dev: usb_device::device::UsbDevice<'static, UsbBus>,
@@ -101,7 +110,7 @@ mod app {
         display: st7735_lcd::ST7735<rp2040_hal::Spi<rp2040_hal::spi::Enabled,SPI0,8> , rp2040_hal::gpio::Pin<Gpio16,rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>> , rp2040_hal::gpio::Pin<Gpio14,rp2040_hal::gpio::Output<rp2040_hal::gpio::PushPull>>>,
         displayAlarm: Alarm2,
         #[lock_free]
-        x: i32
+        graphics: Graphics
     }
 
     #[local]
@@ -160,46 +169,46 @@ mod app {
         let usb_class = keyberon::new_class(unsafe { USB_BUS.as_ref().unwrap() }, ());
         let usb_dev = keyberon::new_device(unsafe { USB_BUS.as_ref().unwrap() });
 
-        // let matrix = keyberon::matrix::Matrix::new(
-        //     [
-        //         pins.gpio27.into_pull_up_input().into(),
-        //         pins.gpio26.into_pull_up_input().into(),
-        //         pins.gpio22.into_pull_up_input().into(),
-        //         pins.gpio21.into_pull_up_input().into(),
-        //         pins.gpio20.into_pull_up_input().into(),
-        //         pins.gpio4.into_pull_up_input().into(),
-        //         pins.gpio3.into_pull_up_input().into(),
-        //         pins.gpio2.into_pull_up_input().into(),
-        //         pins.gpio1.into_pull_up_input().into(),
-        //         pins.gpio0.into_pull_up_input().into(),
-        //     ],
-        //     [
-        //         pins.gpio5.into_push_pull_output().into(),
-        //         pins.gpio6.into_push_pull_output().into(),
-        //         pins.gpio7.into_push_pull_output().into(),
-        //         pins.gpio8.into_push_pull_output().into(),
-        //     ],
-        // );
         let matrix = keyberon::matrix::Matrix::new(
             [
-                pins.gpio27.into_push_pull_output().into(),
-                pins.gpio26.into_push_pull_output().into(),
-                pins.gpio22.into_push_pull_output().into(),
-                pins.gpio21.into_push_pull_output().into(),
-                pins.gpio20.into_push_pull_output().into(),
-                pins.gpio4.into_push_pull_output().into(),
-                pins.gpio3.into_push_pull_output().into(),
-                pins.gpio2.into_push_pull_output().into(),
-                pins.gpio1.into_push_pull_output().into(),
-                pins.gpio0.into_push_pull_output().into(),
+                pins.gpio27.into_pull_up_input().into(),
+                pins.gpio26.into_pull_up_input().into(),
+                pins.gpio22.into_pull_up_input().into(),
+                pins.gpio21.into_pull_up_input().into(),
+                pins.gpio20.into_pull_up_input().into(),
+                pins.gpio4.into_pull_up_input().into(),
+                pins.gpio3.into_pull_up_input().into(),
+                pins.gpio2.into_pull_up_input().into(),
+                pins.gpio1.into_pull_up_input().into(),
+                pins.gpio0.into_pull_up_input().into(),
             ],
             [
-                pins.gpio5.into_pull_down_input().into(),
-                pins.gpio6.into_pull_down_input().into(),
-                pins.gpio7.into_pull_down_input().into(),
-                pins.gpio8.into_pull_down_input().into(),
+                pins.gpio5.into_push_pull_output().into(),
+                pins.gpio6.into_push_pull_output().into(),
+                pins.gpio7.into_push_pull_output().into(),
+                pins.gpio8.into_push_pull_output().into(),
             ],
         );
+        // let matrix = keyberon::matrix::Matrix::new(
+        //     [
+        //         pins.gpio27.into_push_pull_output().into(),
+        //         pins.gpio26.into_push_pull_output().into(),
+        //         pins.gpio22.into_push_pull_output().into(),
+        //         pins.gpio21.into_push_pull_output().into(),
+        //         pins.gpio20.into_push_pull_output().into(),
+        //         pins.gpio4.into_push_pull_output().into(),
+        //         pins.gpio3.into_push_pull_output().into(),
+        //         pins.gpio2.into_push_pull_output().into(),
+        //         pins.gpio1.into_push_pull_output().into(),
+        //         pins.gpio0.into_push_pull_output().into(),
+        //     ],
+        //     [
+        //         pins.gpio5.into_pull_down_input().into(),
+        //         pins.gpio6.into_pull_down_input().into(),
+        //         pins.gpio7.into_pull_down_input().into(),
+        //         pins.gpio8.into_pull_down_input().into(),
+        //     ],
+        // );
 
 
         // These are implicitly used by the spi driver if they are in the correct mode
@@ -241,15 +250,15 @@ mod app {
 
         display.init(&mut delay).unwrap();
         display.set_orientation(&Orientation::PortraitSwapped).unwrap();
-        display.clear(Rgb565::GREEN).unwrap();
+        display.clear(Rgb565::BLACK).unwrap();
         display.set_offset(0, 0);
 
-        let image_raw: ImageRawLE<Rgb565> =
-            ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
+        // let image_raw: ImageRawLE<Rgb565> =
+        //     ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
 
-        let image: Image<_> = Image::new(&image_raw, Point::new(24, 28));
+        // let image: Image<_> = Image::new(&image_raw, Point::new(24, 28));
 
-        image.draw(&mut display).unwrap();
+        // image.draw(&mut display).unwrap();
         
         // Wait until the background and image have been rendered otherwise
         // the screen will show random pixels for a brief moment
@@ -274,7 +283,7 @@ mod app {
                 watchdog,
                 display,
                 displayAlarm,
-                x: 0
+                graphics: crate::Graphics{x:0,y:0}
             },
             Local {},
             init::Monotonics(),
@@ -325,18 +334,60 @@ mod app {
         while let Ok(0) = c.shared.usb_class.lock(|k| k.write(report.as_bytes())) {}
     }
 
-    #[task(binds = TIMER_IRQ_2, priority = 1, shared = [ display, displayAlarm, x ])]
+    #[task(binds = TIMER_IRQ_2, priority = 1, shared = [ display, displayAlarm, graphics ])]
     fn screen_update_irq(c: screen_update_irq::Context) {
+        // please ignore some of this sloppy code
+        // i am a good coder irl i pinky promise
+
         let mut alarm = c.shared.displayAlarm;
+
+        let display = c.shared.display;
+        let graphics = c.shared.graphics;
 
         let image_raw: ImageRawLE<Rgb565> =
         ImageRaw::new(include_bytes!("../assets/ferris.raw"), 86);
 
-        let image: Image<_> = Image::new(&image_raw, Point::new(0, *c.shared.x));
+        let image: Image<_> = Image::new(&image_raw, Point::new(0, graphics.y));
         
-        *c.shared.x =(*c.shared.x + 1)%160 ;
+        //display.clear(Rgb565::BLACK).unwrap();
 
-        image.draw(c.shared.display).unwrap();
+        //let style = embedded_graphics::mono_font::MonoTextStyle::new(, Rgb565::WHITE);
+        let styleBlack = embedded_graphics::mono_font::MonoTextStyle::new(&embedded_graphics::mono_font::ascii::FONT_8X13_BOLD, Rgb565::BLACK);
+
+        let textStyleWhite = embedded_graphics::mono_font::MonoTextStyleBuilder::new()
+            .font(&embedded_graphics::mono_font::ascii::FONT_8X13_BOLD)
+            .text_color(Rgb565::WHITE)
+            .background_color(Rgb565::BLACK)
+            .build();
+        let textStyleRed = embedded_graphics::mono_font::MonoTextStyleBuilder::new()
+            .font(&embedded_graphics::mono_font::jis_x0201::FONT_10X20)
+            .text_color(Rgb565::RED)
+            .background_color(Rgb565::BLACK)
+            .build();
+
+        let FONT_BUFFER = 13;
+        // let NUM_LINES = 9;
+        let NUM_LINES = 8;
+        let TOTAL_HEIGHT = SCREEN_HEIGHT as i32+FONT_BUFFER;
+
+        //embedded_graphics::text::Text::new("Hello Rust!", Point::new(20, graphics.y-1), styleBlack).draw(display);
+        for i in 0..NUM_LINES {
+            //graphics.y += (( i/NUM_LINES) * 200);
+            let newY = (graphics.y+(((SCREEN_HEIGHT as i32+FONT_BUFFER)/(NUM_LINES))*i))%(SCREEN_HEIGHT as i32+FONT_BUFFER);// %(SCREEN_HEIGHT as i32+FONT_BUFFER);
+            let style = if i == 0 {textStyleRed} else {textStyleWhite};
+            //let text1 = if i == 0 {"! 「システム"} else {"! SYSTEM"}; 
+            let text1 = if i == 0 {"! ｼｽﾃﾑ"} else {"! SYSTEM"}; 
+            //let text2 = if i == 0 {"パニック」!"} else {"PANIC !"};
+            let text2 = if i == 0 {"ﾊﾟﾆｯｸ!"} else {"PANIC !"};
+            // let text = if i%2==0 {"hocus"} else {"pocus"};
+            embedded_graphics::text::Text::new(text1, Point::new(0, TOTAL_HEIGHT-newY), style).draw(display);
+            embedded_graphics::text::Text::new(text2, Point::new(70, newY), style).draw(display);
+        }
+
+        
+        graphics.y = (graphics.y + 1)%(SCREEN_HEIGHT as i32+FONT_BUFFER);
+
+        //image.draw(display).unwrap();
 
         alarm.lock(|a| {
             a.clear_interrupt();
