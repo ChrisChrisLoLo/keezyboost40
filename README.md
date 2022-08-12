@@ -33,7 +33,7 @@ The following is the materials you will want/need to make your own keezyboost40.
 |Kailh Choc Hotswap Switches| 40+10| |
 |LL4148 SMD Diodes|  40+10| This board uses SMD diodes exclusively. I found though-hole diodes often easily slipped around in a way such that the board was no longer able to fit inside the case|
 |1.8" ST7735 TFT|  1| Generally speaking, you want the one with the Red PCB. Do NOT use the one from Adafruit, as the pin order on that one is different|
-|Raspberry Pi Pico|  1| Try to get the original or a _very_ similar clone with castellated pins. From casual testing, other RP2040 boards may not work (for example, the Pico cloness from WeAct can't seem to properly drive the LCD with 3.3V logic)|
+|Raspberry Pi Pico|  1| Try to get the original or a _very_ similar clone with castellated pins. From casual testing, other RP2040 boards may not work (for example, the Pico clones from WeAct can't seem to properly drive the LCD with 3.3V logic)|
 |Rubber Feet|  6+2| Any should generally work, though I'm using ~2.5mm thick ones, as they give more space for screw heads, as well as the magnetic connector I'm using|
 |3D Printed Case|  1| You could use PCB printing services like PCBWay to make one in resin, though I haven't confirmed if they'd be durable enough to survive in transit|
 |M2 Nuts|  10+5| 6 nuts to hold the PCB to the case, and another 4 to hold the acrylic screen to the PCB. I'm using nylon nuts, though any should work. I recommend you grab this with a hex spacer kit, as you get all the M2 parts you need in a single purchase!|
