@@ -3,7 +3,9 @@
     "active_layer": 0,
     "active_layer_preset": "",
     "auto_track_width": true,
-    "hidden_nets": [],
+    "hidden_nets": [
+      "Net-(D1-Pad2)"
+    ],
     "high_contrast_mode": 0,
     "net_color_mode": 1,
     "opacity": {
@@ -62,7 +64,7 @@
       35,
       36
     ],
-    "visible_layers": "fffffbf_ffffffff",
+    "visible_layers": "0000000_80000001",
     "zone_display_mode": 0
   },
   "meta": {

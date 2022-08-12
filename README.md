@@ -25,6 +25,8 @@ Prototypes are functional! v0.0 needs a jumper cable from the Pico to the reset 
 ## PCB
 You can generate the gerbers from source in the `pcb` directory, and send off imediately to PCBWay or the like. [PCBWay](https://www.pcbway.com/) has helped sponsor this project, and has provided a fast, easy service while ordering from them, so I recommend checking them out for your PCB and FDM printing needs.
 
+<img src="https://raw.githubusercontent.com/ChrisChrisLoLo/keezyboost40/master/images/keezyboost40pcb.jpg" width="500">
+
 ## BOM
 The following is the materials you will want/need to make your own keezyboost40. Note that anything amount after a `+` denotes the rough amount of spares you may want to have when ordering the parts. Anything involving the acrylic screen is optional. Even the LCD is optional if you prefer more of a lumberjack-y vibe :)
 |Part|Count|Notes
