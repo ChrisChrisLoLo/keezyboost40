@@ -19,6 +19,9 @@ A 4x10 low profile ortholinear keyboard with an lcd screen in the center. Uses t
     - Uses Keyberon as the firmware base, allowing for a "modular" firmware that can easily be built upon
     - More details can be found in DESIGN.md
 
+Display demo here:
+[![keezyboost40 display demo](https://img.youtube.com/vi/Bl2fR8NX23E/0.jpg)](https://www.youtube.com/watch?v=Bl2fR8NX23E)
+
 ## Status
 Prototypes are functional! v0.0 needs a jumper cable from the Pico to the reset pin in the TFT, but works perfectly fine with the Raspberry Pi Pico aside from that. v0.1 fixes this issue (currently in the `master` branch), though hasn't been produced and tested yet.
 
