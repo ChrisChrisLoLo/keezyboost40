@@ -20,6 +20,7 @@ A 4x10 low profile ortholinear keyboard with an lcd screen in the center. Uses t
     - More details can be found in DESIGN.md
 
 Display demo here:
+
 [![keezyboost40 display demo](https://img.youtube.com/vi/Bl2fR8NX23E/0.jpg)](https://www.youtube.com/watch?v=Bl2fR8NX23E)
 
 ## Status
