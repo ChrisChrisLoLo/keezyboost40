@@ -23,7 +23,7 @@ A 4x10 low profile ortholinear keyboard with an lcd screen in the center. Uses t
 Prototypes are functional! v0.0 needs a jumper cable from the Pico to the reset pin in the TFT, but works perfectly fine with the Raspberry Pi Pico aside from that. v0.1 fixes this issue (currently in the `master` branch), though hasn't been produced and tested yet.
 
 ## PCB
-You can generate the gerbers from source in the `pcb` directory, and send off imediately to PCBWay or the like. [PCBWay](https://www.pcbway.com/) has helped sponsor this project, and has provided a fast, easy service while ordering from them, so I recommend checking them out for your PCB and FDM printing needs.
+You can generate the gerbers from source in the `pcb` directory, and send off imediately to PCBWay or the like. [PCBWay](https://www.pcbway.com/) has helped sponsor this project, and has provided a fast, easy service while ordering from them. I was also suprised how well my board came out desipte being quite oddly shaped, so I recommend checking them out for your next project!
 
 <img src="https://raw.githubusercontent.com/ChrisChrisLoLo/keezyboost40/master/images/keezyboost40pcb.jpg" width="500">
 
@@ -39,7 +39,7 @@ The following is the materials you will want/need to make your own keezyboost40.
 |Rubber Feet|  6+2| Any should generally work, though I'm using ~2.5mm thick ones, as they give more space for screw heads, as well as the magnetic connector I'm using|
 |3D Printed Case|  1| You could use PCB printing services like PCBWay to make one in resin, though I haven't confirmed if they'd be durable enough to survive in transit|
 |M2 Nuts|  10+5| 6 nuts to hold the PCB to the case, and another 4 to hold the acrylic screen to the PCB. I'm using nylon nuts, though any should work. I recommend you grab this with a hex spacer kit, as you get all the M2 parts you need in a single purchase!|
-|M2 6mm Double Female spacer|  4+2| Spacers to keep the acrylic from the pcb|
+|M2 8mm Double Female spacer|  4+2| Spacers to keep the acrylic from the pcb|
 |M2 12mm Screw|  4+2| Screws for the acrylic screen|
 |M2 6mm Screw|  6+3| Screws for the PCB and case. Be careful of the size of the screw head! the flatter the better!|
 |Acrylic Screen|  1| You can cut one out using the svgs in the `outlines` folder|
