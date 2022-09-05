@@ -369,6 +369,7 @@ dependencies = [
 [[package]]
 name = "keyberon"
 version = "0.2.0"
+source = "git+https://github.com/ChrisChrisLoLo/keyberon?branch=delay_workaround#4ac395e20e0d758847253c1b34c74253dd6726ef"
 dependencies = [
  "arraydeque",
  "cortex-m",
@@ -382,6 +383,7 @@ dependencies = [
 [[package]]
 name = "keyberon-macros"
 version = "0.1.0"
+source = "git+https://github.com/ChrisChrisLoLo/keyberon?branch=delay_workaround#4ac395e20e0d758847253c1b34c74253dd6726ef"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",

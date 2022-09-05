@@ -7,7 +7,9 @@ edition = "2021"
 
 [dependencies]
 #   keyberon = { git = "https://github.com/TeXitoi/keyberon" }
-keyberon = {path = "../keyberon"}
+# Use local fork that has hardcoded timeout in matrix scanning function
+# Used until https://github.com/TeXitoi/keyberon/issues/97 is resolved
+keyberon = { git = "https://github.com/ChrisChrisLoLo/keyberon", branch = "delay_workaround" }
 cortex-m = "0.7.3"
 cortex-m-rt = "0.7.0"
 cortex-m-rtic = "1.0.0"
