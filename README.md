@@ -24,7 +24,9 @@ Display demo here:
 [![keezyboost40 display demo](https://img.youtube.com/vi/Bl2fR8NX23E/0.jpg)](https://www.youtube.com/watch?v=Bl2fR8NX23E)
 
 ## Status
-Prototypes are functional! v0.0 needs a jumper cable from the Pico to the reset pin in the TFT, but works perfectly fine with the Raspberry Pi Pico aside from that. v0.1 fixes this issue (currently in the `master` branch), though hasn't been produced and tested yet.
+Prototypes are functional, though firmware is still WIP! v0.0 needs a jumper cable from the Pico to the reset pin in the TFT, but works perfectly fine with the Raspberry Pi Pico aside from that. v0.1 fixes this issue (currently in the `master` branch), though hasn't been produced and tested yet.
+
+I need to fix a bug with the animation slowing down, though I suspect it'll mostly involve tinkering with RTOS timings
 
 ## PCB
 You can generate the gerbers from source in the `pcb` directory, and send off imediately to PCBWay or the like. [PCBWay](https://www.pcbway.com/) has helped sponsor this project, and has provided a fast, easy service while ordering from them. I was also suprised how well my board came out desipte being quite oddly shaped, so I recommend checking them out for your next project!
