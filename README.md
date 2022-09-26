@@ -14,8 +14,8 @@ A 4x10 low profile ortholinear keyboard with an lcd screen in the center. Uses t
         - Lots of room for programming with MicroPython, or room for graphics and code
 - Parts readily available
     - Only SMD parts required are diodes and kailh choc hotswap sockets
-- Uses Rust firmware
-    - This alone gets people excited??
+- Supports QMK or Rust firmware
+    - QMK hex can be found in firmware file
     - Uses Keyberon as the firmware base, allowing for a "modular" firmware that can easily be built upon
     - More details can be found in DESIGN.md
 
