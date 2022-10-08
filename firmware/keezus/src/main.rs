@@ -81,8 +81,8 @@ mod app {
     use asm_delay::AsmDelay;
     use asm_delay::bitrate::U32BitrateExt;
 
-    const SCAN_TIME_US: u32 = 1000;
-    // const SCAN_TIME_US: u32 = 2000;
+    // const SCAN_TIME_US: u32 = 1000;
+    const SCAN_TIME_US: u32 = 2000;
 
     const DISPLAY_UPDATE_TIME_US: u32 = 1700;
     // const DISPLAY_UPDATE_TIME_US: u32 = 3400;
