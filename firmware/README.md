@@ -4,4 +4,6 @@ This folder holds firmware code. `keezus` is the name of my "homebrew" firmware 
 
 I now have a hex file for QMK. The screen works with this hex. For the most up to date firmware/source code, check out my local fork of QMK [here](https://github.com/ChrisChrisLoLo/qmk_firmware/tree/keezyboost40_2/keyboards/sporewoh/keezyboost40)
 
+You can find the general layout of the QMK firmware here: https://github.com/ChrisChrisLoLo/TypeBeastXDPlus
+
 I may get to putting a QMK VIA(L) hex file here once the folks at QMK engineer a way to get VIA(L) working with the RP2040.
